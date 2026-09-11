@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+local.properties
+gradle-app.setting
+.gradletasknamecache
+
+# The wrapper jar and scripts are not checked in here; run `gradle wrapper` or open the project
+# in Android Studio to generate them. See README.md.
+gradle/wrapper/gradle-wrapper.jar
+gradlew
+gradlew.bat
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+.navigation/
+.DS_Store
+
+# Keys
+*.jks
+*.keystore

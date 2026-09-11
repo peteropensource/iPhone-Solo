@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>iPhone Solo</title>
+<meta name="description" content="A flat picture hanging in 3D space. Tilting the device moves your eye, not the picture.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main>
+
+  <header class="hero">
+    <h1>iPhone Solo</h1>
+    <p class="kicker">
+      Want that silky foldable page turn, but don't have the budget for a second screen?
+    </p>
+    <p class="tagline">
+      One display. Zero hinges. Tilt your phone below, or drag the picture if you are on a
+      desktop. The content is a flat picture hanging in 3D space, and the device is a window you
+      look through: tilting does not move the picture, it moves your eye.
+    </p>
+  </header>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- The effect                                                          -->
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="stage-wrap">
+    <div class="phone" id="phone">
+      <div class="phone-screen">
+        <div id="stage" class="stage"></div>
+      </div>
+    </div>
+
+    <p class="hint" id="hint">Drag left and right across the phone to tilt it.</p>
+
+    <div class="readout">
+      <span class="readout-item"><b id="r-roll">0.0&deg;</b><i>roll</i></span>
+      <span class="readout-item"><b id="r-tilt">0.0&deg;</b><i>tilt</i></span>
+      <span class="readout-item"><b id="r-progress">0.00</b><i>progress</i></span>
+      <span class="readout-item"><b id="r-front">1.00</b><i>front</i></span>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Controls                                                            -->
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="panel">
+    <button id="motion-btn" class="primary" type="button" hidden>Use device tilt</button>
+    <p id="motion-msg" class="motion-msg" hidden></p>
+
+    <div class="control">
+      <label for="roll">Roll <output id="roll-out">0&deg;</output></label>
+      <input type="range" id="roll" min="-90" max="90" step="0.5" value="0">
+      <div class="scale"><span>&minus;90&deg;</span><span>0&deg;</span><span>+90&deg;</span></div>
+    </div>
+
+    <details class="tuning" open>
+      <summary>Tuning</summary>
+
+      <div class="control">
+        <label for="blackAt">blackAt <output id="blackAt-out">75&deg;</output></label>
+        <input type="range" id="blackAt" min="30" max="90" step="1" value="75">
+        <p class="note">Tilt at which the content is fully gone.</p>
+      </div>
+
+      <div class="control">
+        <label for="softness">softness <output id="softness-out">1.00</output></label>
+        <input type="range" id="softness" min="0.1" max="2" step="0.05" value="1">
+        <p class="note">Length of the dissolve front, in units of the root-to-far-edge distance.</p>
+      </div>
+
+      <div class="control">
+        <label for="eyeDistance">eyeDistance <output id="eyeDistance-out">2.0</output></label>
+        <input type="range" id="eyeDistance" min="0.8" max="5" step="0.1" value="2">
+        <p class="note">Viewer distance from the screen plane, as a multiple of max(W,&nbsp;H).</p>
+      </div>
+
+      <div class="control row">
+        <label class="file-btn" for="file">Use your own image
+          <input type="file" id="file" accept="image/*">
+        </label>
+        <button type="button" id="reset" class="ghost">Reset</button>
+      </div>
+      <p class="note">
+        Your picture never leaves the browser. It is read with
+        <code>URL.createObjectURL</code> and rendered locally; there is no server, no upload
+        and no analytics on this page.
+      </p>
+    </details>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Video                                                               -->
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="video-section">
+    <h2>On a real phone</h2>
+    <video src="assets/demo.mp4" poster="assets/poster.jpg" muted playsinline loop controls
+           preload="none" width="390" height="844"></video>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- How it works                                                        -->
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <p>
+      One number drives everything: <code>roll</code>, the device's left/right tilt. From it come
+      two independent scalars &mdash; a <em>tilt</em> angle that rotates the picture in 3D about
+      whichever edge is currently lowest, and a <em>progress</em> value that sweeps a straight
+      dissolve front from the far edge back toward that hinge.
+    </p>
+    <p>
+      Every point in the picture gets a phase from that front, and two response curves read off
+      it: blur ramps in and finishes early, at phase 0.65, while opacity only starts falling at
+      0.3. That deliberate offset is the whole trick &mdash; each region goes sharp, then blurred,
+      then blurred and fading, then gone, which reads as depth rather than as a cheap crossfade.
+    </p>
+    <p>
+      The blur is a four-rung ladder of pre-blurred copies cross-faded by gradient masks, and each
+      rung is drawn into a box three sigmas larger than the picture so its feathered edge melts
+      into the background instead of ending in a hard line.
+    </p>
+    <p class="links">
+      <a target="_blank" rel="noopener" href="https://github.com/peteropensource/iPhone-Solo/blob/main/docs/ALGORITHM.md">Read the full algorithm</a>
+      <a target="_blank" rel="noopener" href="https://github.com/peteropensource/iPhone-Solo">Repository root</a>
+    </p>
+  </section>
+
+  <footer>
+    <p>Zero dependencies. No fonts, scripts, stylesheets or images from anywhere but this folder.</p>
+  </footer>
+
+</main>
+
+<script type="module" src="demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The library declares nothing. Reading TYPE_GRAVITY needs no permission and no <uses-feature>;
+    apps that cannot work without a sensor should declare that themselves, as the sample does.
+    AGP 8 takes the package name from `namespace` in build.gradle.kts, so there is none here.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />

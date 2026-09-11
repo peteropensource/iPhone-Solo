@@ -1,0 +1,13 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserdatad
+xcuserdata/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+Package.resolved
+.claude/settings.local.json
+/Android/.gradle/
+/Android/build/
+/Android/*/build/
+/Android/local.properties
