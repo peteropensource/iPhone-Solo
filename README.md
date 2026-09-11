@@ -16,16 +16,9 @@ and dissolves into the void. Tilt it back and everything reassembles from that e
 
 No folding display required. No folding display supported, in fact.
 
-<!--
-  GitHub does not play <video> with a repo-relative src in a README. A linked poster always
-  renders, so that is what this is. To get a real inline player, drag media/demo.mp4 into the
-  GitHub web editor for this file: GitHub uploads it to its CDN and gives you a URL that does
-  autoplay inline. Paste that URL on its own line in place of this block.
--->
+![iPhone Solo: a home screen folding away as the phone is tilted](media/demo.gif)
 
-[![iPhone Solo, folding a home screen by tilt](media/poster.jpg)](media/demo.mp4)
-
-*Nine seconds, no hinge. [Click to play](media/demo.mp4).*
+*One tilt, no hinge. [The longer clip](media/demo.mp4) shows it picked up off the desk.*
 
 **[Try it in your browser](https://peteropensource.github.io/iPhone-Solo/)** &nbsp;·&nbsp;
 **[How it works](docs/ALGORITHM.md)** &nbsp;·&nbsp;
