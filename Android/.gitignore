@@ -5,12 +5,6 @@ local.properties
 gradle-app.setting
 .gradletasknamecache
 
-# The wrapper jar and scripts are not checked in here; run `gradle wrapper` or open the project
-# in Android Studio to generate them. See README.md.
-gradle/wrapper/gradle-wrapper.jar
-gradlew
-gradlew.bat
-
 # Android
 *.apk
 *.aab

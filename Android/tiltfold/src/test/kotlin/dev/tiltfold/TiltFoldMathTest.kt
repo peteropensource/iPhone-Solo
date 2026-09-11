@@ -348,14 +348,17 @@ class TiltFoldMathTest {
         val maxDimensionPx = 874.0 * density
         val distance = composeCameraDistance(2.0 * maxDimensionPx, density)
 
-        // Compose's DefaultCameraDistance is 8, which under the same relation means 1280dp.
-        // Ours works out at about 10.9, i.e. 1748dp, which is 2 x 874dp as the spec asks.
-        assertEquals(10.925, distance, 0.01)
+        // Compose multiplies cameraDistance by density before it reaches the platform layer, so
+        // the round trip has to give back exactly the eye distance the spec asked for.
         assertEquals(
-            "the round trip must give back the spec's distance in dp",
-            1748.0, distance * COMPOSE_CAMERA_DISTANCE_UNIT, 0.1
+            "the round trip must give back the spec's distance in pixels",
+            2.0 * maxDimensionPx, distance * density, 0.1
         )
-        assertTrue("a sane camera distance is the same order as Compose's default", distance in 1.0..100.0)
+        assertEquals(2.0 * 874.0, distance, 0.01)
+
+        // Sanity: far enough that a screen-sized view is not bent into a wedge. Compose's own
+        // docs say to use a distance greater than the view's width for a rotationY of any size.
+        assertTrue("the camera must sit well beyond the view", distance * density > maxDimensionPx)
     }
 
     // -----------------------------------------------------------------------------------------

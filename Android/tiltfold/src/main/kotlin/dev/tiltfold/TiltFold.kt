@@ -157,18 +157,30 @@ fun TiltFold(
             .graphicsLayer {
                 if (size.width <= 0f || size.height <= 0f) return@graphicsLayer
                 val geometry = foldGeometry(size, root, progress, softness)
-                val hinge = geometry.hingeFraction
-                transformOrigin = TransformOrigin(hinge.x.toFloat(), hinge.y.toFloat())
+                // Pivot at the centre, not at the hinge. graphicsLayer puts the camera wherever
+                // transformOrigin is, so pivoting at the hinge would drag the vanishing point
+                // there too and shear the far edge toward a corner. Spec section 4 steps 3 to 5
+                // want it at the viewport centre; the translation below re-pins the hinge.
+                transformOrigin = TransformOrigin(0.5f, 0.5f)
                 rotationY = ROTATION_SIGN * geometry.direction.x.toFloat() * tilt
                 rotationX = -ROTATION_SIGN * geometry.direction.y.toFloat() * tilt
                 // Spec section 4 step 4: the eye sits `eyeDistance * max(W, H)` in front of the
                 // screen plane. `size` here is in pixels, and `density` is pixels per dp, so
                 // composeCameraDistance() converts into the units graphicsLayer wants. See its
                 // documentation for why that divisor is 160 * density.
+                val eyeDistancePx = config.safeEyeDistance * max(size.width, size.height).toDouble()
                 cameraDistance = composeCameraDistance(
-                    eyeDistancePixels = config.safeEyeDistance * max(size.width, size.height).toDouble(),
+                    eyeDistancePixels = eyeDistancePx,
                     density = this.density.toDouble()
                 ).toFloat()
+
+                // Rotating about the centre swings the hinge off its edge. Put it back, so the
+                // fold reads as a hinge rather than a slide.
+                val drift = hingeDriftFraction(
+                    geometry.halfExtent, config.tiltRadians(rollDegrees), eyeDistancePx
+                )
+                translationX = (geometry.direction.x * geometry.halfExtent * drift).toFloat()
+                translationY = (geometry.direction.y * geometry.halfExtent * drift).toFloat()
             }
             // Then the opacity curve, over the whole stack, grown to cover the widest feather.
             .drawWithContent {

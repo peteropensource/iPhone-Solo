@@ -3,45 +3,44 @@
 A Jetpack Compose port of the TiltFold effect. Same specification as the SwiftUI and web
 implementations: [`../docs/ALGORITHM.md`](../docs/ALGORITHM.md).
 
-## Read this before you trust it
+## Status
 
-**This module has never been compiled or run.** It was written on a machine with no JDK, no
-Gradle, no Android SDK and no emulator, so the Android half of it could not be built, and nothing
-here has been seen on a screen.
+Built, tested and run. The library compiles, the 22 unit tests pass, and the sample app has been
+installed on an Android 14 emulator (Pixel 7, arm64, API 34) and driven through its whole range
+with the emulator's virtual gravity sensor. Screenshots at rest, at ±30° and at 50° all match the
+specification: the root edge stays sharp and pinned, the far edge recedes and dissolves, and the
+two directions mirror each other.
 
-What *was* verified, and how:
+Two things were wrong when it was written blind, and both are fixed here. They are recorded
+because they are exactly the kind of thing that only a screen tells you:
 
-| Part | Status |
-|---|---|
-| `TiltFoldMath.kt`, `TiltFoldConfig.kt` | Compiled clean with `kotlinc`, no warnings. They import nothing but `kotlin.math`, which is exactly why they are separate files. Checked against the reference table in `ALGORITHM.md` section 10 — all twenty checks in `verify-math.sh` pass, including the Android gravity sign convention. |
-| `TiltFoldMathTest.kt` | Never run by JUnit, which needs Gradle. Every assertion in it was executed by an equivalent standalone runner instead: 231 checks, all passing. The file itself was type-checked against a stub of the JUnit API, so its syntax and overload resolution are sound. |
-| `TiltFold.kt`, `TiltMonitor.kt`, the sample app, every Gradle file | Parsed by `kotlinc` far enough to confirm there are no syntax errors. Not type-checked, not compiled, not run: there is no Compose on the classpath here. |
+**The camera was 160 times too close.** `graphicsLayer.cameraDistance` is multiplied by the
+display density before it reaches the platform layer, so it is `density` pixels per unit, not
+`160 * density`. With the wrong divisor the camera sat 30 pixels from a 1080-pixel-wide view and
+bent the content into an unreadable wedge. It compiled, the unit tests passed, and the arithmetic
+was right; only the render showed it.
 
-So: the arithmetic is right, and everything above the arithmetic is an educated first draft.
-Expect to fix small things on first open, most likely an import, a dependency version or a
-Compose API signature. If something is off, `ALGORITHM.md` is the source of truth and the Swift
-implementation in `../Sources/TiltFold` is a working reference for the same decisions.
-
-`verify-math.sh` re-runs the part that can be checked without any Android tooling:
-
-```sh
-./verify-math.sh          # needs only kotlinc, e.g. brew install kotlin
-```
+**The vanishing point was at the hinge.** `graphicsLayer` puts the camera wherever
+`transformOrigin` is and gives you no separate perspective origin, so pivoting at the hinge drags
+the vanishing point there too. The fix is to pivot at the centre, which is where the specification
+wants the vanishing point, and then translate the layer to put the hinge back on its edge.
+`hingeDriftFraction` in `TiltFoldMath.kt` computes that translation.
 
 ## Building it
 
-There is no Gradle wrapper jar in this repository, because fabricating one would have meant
-shipping a binary that was never run. Generate it, or let Android Studio do it for you:
+The Gradle wrapper is checked in, so you need nothing but a JDK 17 and an Android SDK:
 
 ```sh
 cd Android
-gradle wrapper          # if you have a system Gradle; writes gradlew, gradlew.bat and the jar
-./gradlew :tiltfold:testDebugUnitTest
-./gradlew :sample:installDebug
+./gradlew :tiltfold:testDebugUnitTest    # the spec conformance tests
+./gradlew :sample:installDebug           # onto a device or a running emulator
 ```
 
-Opening `Android/` in Android Studio (Hedgehog or newer) also works and will offer to create the
-wrapper itself. AGP 8.2 needs **JDK 17** to run.
+Opening `Android/` in Android Studio works too. AGP 8.2 needs **JDK 17**; anything newer as the
+Gradle JDK will fail with a version error rather than a useful message.
+
+`verify-math.sh` still exists and still needs nothing but `kotlinc`, which is useful when you want
+to check the arithmetic without an Android toolchain at all.
 
 Versions: Kotlin 1.9.22, Compose BOM 2024.02.00, AGP 8.2.x, compileSdk 34, minSdk 26, targetSdk 34.
 Dependencies are limited to AndroidX Compose, core-ktx, activity-compose and
@@ -145,23 +144,21 @@ against the iOS convention, where the same pose reads `(0, 0, -1)`. Substituting
 `rollFromGravity` does. This is the single most likely thing to be backwards if the effect leans
 the wrong way on a device, so it is asserted in both the unit test and `verify-math.sh`.
 
-**Perspective is expressed as a camera distance.** `graphicsLayer.cameraDistance` is not a
-distance in pixels; Compose multiplies it by `DisplayMetrics.densityDpi`, and `densityDpi ==
-160 * density`, so `distanceInPixels = cameraDistance * 160 * density`. `composeCameraDistance()`
-does that conversion. The sanity check is Compose's own default of `8.0f`, which under this
-relation is 1280dp, exactly the platform `View` default.
+**Perspective is expressed as a camera distance, in its own units.**
+`graphicsLayer.cameraDistance` is not a distance in pixels. Compose multiplies it by the display
+density on its way to the platform layer, so `distanceInPixels = cameraDistance * density`.
+`composeCameraDistance()` does that conversion. Get this wrong and the effect still compiles, the
+unit tests still pass, and the render is unusable: see Status above.
 
-**The vanishing point sits at the hinge, not at the viewport centre.** Spec section 4 steps 3–5
-move the perspective origin back to the centre of the viewport; CSS spells that
-`perspective-origin: 50% 50%` while `transform-origin` stays at the hinge. Android's camera is
-positioned *at* the transform origin, and `graphicsLayer` exposes no separate perspective origin,
-so you get one or the other. Keeping the hinge pinned matters more than the symmetry of the
-recession, so the hinge is the pivot and the far edge shears very slightly toward one corner
-instead of contracting symmetrically about the midline. A larger `eyeDistance` reduces it. Fixing
-it properly would mean building the 4×4 matrix by hand and pushing it through `Canvas.concat`,
-which is much less certain API than `graphicsLayer`. Apart from that, `rotationY`,
-`transformOrigin` and `cameraDistance` give the same result CSS gets from `transform-origin` and
-`perspective`, without a hand-built matrix.
+**The pivot and the camera are the same point.** Spec section 4 steps 3 to 5 put the pivot at the
+hinge and the vanishing point at the viewport centre. CSS can do both at once, with
+`transform-origin` on one and `perspective-origin` on the other. `graphicsLayer` has only
+`transformOrigin`, and the camera goes wherever it goes. So this port pivots at the centre, which
+is the half the eye notices, and then translates the layer by `hingeDriftFraction` to put the
+hinge back on its edge. That is not identical to a true rotation about the hinge, since the
+translation happens after the projection rather than before it, but with the camera at the
+specified distance the two differ by well under a pixel at the hinge and by a few tenths of a
+percent elsewhere.
 
 **Blur radius is not Gaussian sigma.** The ladder is specified in sigma. `Modifier.blur` takes a
 "radius" that ends up in `RenderEffect.createBlurEffect`, where Skia converts it as roughly
@@ -183,45 +180,20 @@ fallback gets a heavier one-pole constant (0.12 rather than the spec's 0.3). Sam
 `SENSOR_DELAY_GAME`, roughly 50 Hz against the spec's 60 Hz assumption, which makes the filter
 marginally slower in wall-clock terms and is not worth converting for.
 
-## Things most likely to need a fix on first compile
+## What actually broke, and what did not
 
-Listed honestly, roughly in order of suspicion:
+Written blind, then compiled and run for the first time. For anyone porting this to another
+framework, the split is worth knowing.
 
-1. **The fold leans the wrong way.** The most likely failure of the lot, and the one the spec
-   predicts (section 4 step 2: *"if your effect leans the wrong way, negate this axis"*). The sign
-   was derived, not observed: Compose's `rotationZ` turns content clockwise, which implies the
-   rotations use right-handed formulas in a space with `+y` down, and therefore `+z` pointing
-   *into* the screen — the opposite of the CoreAnimation frame the spec is written in, which
-   negates the rotation about any in-plane axis. If the near edge recedes instead of the far one,
-   flip `ROTATION_SIGN` in `TiltFold.kt`. It is a single named constant for exactly this reason.
-2. **Compose BOM and Kotlin compiler extension versions.** They are tightly coupled. If the build
-   complains, take the pairing from the official compatibility table rather than bumping one.
-3. **`Canvas.saveLayer` and `BlendMode.DstIn` masking.** `drawMasked()` saves a layer that is
-   deliberately *larger* than the element so the blur overspill survives, draws the content, then
-   punches the gradient through with `DstIn`. Standard approach, but if the stack clips that layer
-   to the element's bounds anyway it eats the feathered edge and you get the hard line from spec
-   section 8.
-4. **`BlurredEdgeTreatment.Unbounded`.** Same symptom, different cause: it is what lets the feather
-   spill past the bounds in the first place. If the feather is clipped, try giving each level its
-   own layout box grown by its margin instead of relying on unbounded overspill.
-5. **`Brush.linearGradient(vararg Pair<Float, Color>, start, end, tileMode)`.** The vararg-of-pairs
-   overload exists, but the spread of a 25-element `Array<Pair<...>>` into it is the kind of thing
-   the compiler may argue about. Fall back to a named `colorStops` argument.
-6. **`Modifier.composed`.** `Modifier.tiltFold` uses it. Stable in Compose 1.6, but it is the old
-   way of writing a stateful modifier; bump Compose far forward and expect a deprecation warning
-   here first.
-7. **`LocalLifecycleOwner`'s package.** `TiltMonitor.kt` imports it from
-   `androidx.compose.ui.platform`, correct for Compose 1.6. It moved to `androidx.lifecycle.compose`
-   with lifecycle 2.8 / Compose 1.7, so it is the first import that breaks on a BOM bump.
-8. **`src/main/kotlin` as a source directory.** The Kotlin Android plugin registers it
-   automatically. If it somehow does not, rename the directories to `java` or add a `sourceSets`
-   block.
-9. **The sample's theme and manifest.** Minimal by design, and minimal Android resource files are
-   exactly where a missing attribute bites.
-10. **Hit testing through the 3D transform.** Anything interactive inside a `TiltFold` is touched
-    through a perspective-projected layer. Compose maps pointer input through layer matrices, but
-    do not assume it is exact under a `rotationY` with a short camera distance. The sample keeps
-    its only control outside the fold.
+Compiled first try, no changes: the Compose masking with `saveLayer` and `BlendMode.DstIn`, the
+`BlurredEdgeTreatment.Unbounded` overspill, `Brush.linearGradient` with a spread 25-element array
+of stops, `Modifier.composed`, `LocalLifecycleOwner`'s import, the `src/main/kotlin` source set,
+the sample's theme and manifest, and the Kotlin 1.9.22 / Compose BOM 2024.02.00 pairing. The
+rotation sign was right, which was the thing predicted most likely to be wrong.
+
+Broke, and only on a screen: the two transform problems in Status above. Both are cases where
+every automated check available was green and the picture was still wrong. If you port this
+somewhere new, budget for looking at it rather than only testing it.
 
 ## Layout
 

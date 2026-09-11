@@ -186,12 +186,11 @@ TiltFold(roll = monitor.roll) {
 }
 ```
 
-**Read [Android/README.md](Android/README.md) before you use it.** The Android module has never
-been compiled or run: it was written on a machine with no JDK, no Gradle and no Android SDK. The
-pure-maths layer *was* compiled with `kotlinc` and checked against the reference table in the
-specification, and `Android/verify-math.sh` re-runs that check for you without needing any Android
-tooling. Everything above the arithmetic is an educated first draft, and the Android README says
-exactly which parts to suspect first.
+Built and run on an Android 14 emulator, with 22 unit tests asserting the same reference values
+the Swift suite does. `Modifier.blur` needs API 31 for a real blur, so below that the library
+keeps the fold and the dissolve and drops the progressive defocus rather than failing.
+[Android/README.md](Android/README.md) has the details, including the two transform bugs that
+every automated check passed straight through and only a screenshot caught.
 
 ## The web
 
@@ -242,8 +241,9 @@ ladder is monotonic and resolution-independent.
 swift test
 ```
 
-The web port's maths was checked against the same reference table. The Android port carries the
-same unit tests; read `Android/README.md` before you trust them.
+The web port's maths was checked against the same reference table. The Android port carries its
+own 22 tests, run with `./gradlew :tiltfold:testDebugUnitTest`, plus `Android/verify-math.sh`,
+which checks the arithmetic with nothing installed but `kotlinc`.
 
 ## What this is and is not
 

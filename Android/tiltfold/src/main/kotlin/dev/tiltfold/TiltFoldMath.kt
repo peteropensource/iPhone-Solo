@@ -424,29 +424,52 @@ class GravitySmoother(
 // ---------------------------------------------------------------------------------------------
 
 /**
- * The divisor relating Compose's `graphicsLayer.cameraDistance` to real distance.
+ * How far the hinge drifts when the camera is centred, as a fraction of its own offset from the
+ * viewport centre. Multiply by that offset to get the translation that puts it back.
  *
- * Compose hands `cameraDistance` to the platform layer multiplied by `DisplayMetrics.densityDpi`,
- * and `densityDpi == 160 * density` by definition, so:
+ * `graphicsLayer` places the camera at `transformOrigin` and exposes no separate perspective
+ * origin, so pivoting at the hinge drags the vanishing point there too. Spec section 4 steps 3 to
+ * 5 want it at the viewport centre. So: pivot at the centre, then translate the layer to put the
+ * hinge back on its edge, or the fold reads as a slide.
  *
- * ```
- * distanceInPixels = cameraDistance * 160 * density
- * distanceInDp     = cameraDistance * 160
- * ```
+ * Rotating about the centre swings the hinge (always the near edge) toward the viewer by
+ * `E * sin(tilt)` and shrinks its in-plane offset by `cos(tilt)`, so its projected offset becomes
+ * `E * cos(tilt) * D / (D - E * sin(tilt))`. What is left over is the drift. The hinge is on the
+ * near side whichever edge it is, so this needs no sign of its own.
  *
- * The sanity check is Compose's own default of `8.0f`, which under this relation means 1280dp —
- * exactly the platform `View` default that the framework documents as "on a medium density
- * display, the default distance is 1280" (and 1920 on hdpi, which is also what `8 * 240` gives).
+ * @param halfExtentPx `E` in the spec: centre to the farthest point along the root direction.
+ * @param tiltRadians the rotation applied, 0 for flat.
+ * @param cameraDistancePx eye distance in pixels, the same number fed to [composeCameraDistance].
  */
-const val COMPOSE_CAMERA_DISTANCE_UNIT: Double = 160.0
+fun hingeDriftFraction(
+    halfExtentPx: Double,
+    tiltRadians: Double,
+    cameraDistancePx: Double
+): Double {
+    val d = max(cameraDistancePx, 1.0)
+    val towardViewer = halfExtentPx * kotlin.math.sin(tiltRadians)
+    val denominator = max(d - towardViewer, 1.0)
+    return 1.0 - kotlin.math.cos(tiltRadians) * d / denominator
+}
 
 /**
- * The spec's eye distance, expressed in the units Compose's `graphicsLayer.cameraDistance` wants.
+ * Compose's `graphicsLayer.cameraDistance` is not a distance in pixels. The value is multiplied by
+ * the display density before it reaches the platform layer:
  *
- * @param eyeDistancePixels `config.eyeDistance * max(width, height)`, in **pixels**.
- * @param density `Density.density`, i.e. pixels per dp.
+ * ```
+ * distanceInPixels = cameraDistance * density
+ * ```
+ *
+ * This was established by experiment, not by reading: on a 1080 x 2400 emulator at density 2.625,
+ * feeding the value that this function returns for an eye distance of 4800px produces the mild
+ * foreshortening the specification asks for, while treating the units as `160 * density` put the
+ * camera 30 pixels from a 1080-pixel-wide view and bent the content into an unreadable wedge.
+ *
+ * Compose's default of `8f` is therefore about 21px at that density, which is only sensible
+ * because the default is meant for small, lightly rotated elements rather than whole screens.
+ * Anything the size of a screen needs an explicit value, which is exactly what the docs advise.
  */
 fun composeCameraDistance(eyeDistancePixels: Double, density: Double): Double {
     if (density <= 0.0) return 8.0
-    return max(1e-3, eyeDistancePixels / (COMPOSE_CAMERA_DISTANCE_UNIT * density))
+    return max(1e-3, eyeDistancePixels / density)
 }
