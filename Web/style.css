@@ -313,7 +313,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
 /* --------------------------------------------------------------- video -- */
 
 .video-section { margin-bottom: 28px; }
-.video-section video {
+.video-section img {
   width: 100%;
   max-width: 300px;
   height: auto;
@@ -363,7 +363,7 @@ footer {
   h1 { font-size: 52px; }
   .tagline { font-size: 16px; max-width: 46ch; }
   .phone { width: 330px; }
-  .video-section video { max-width: 330px; }
+  .video-section img { max-width: 330px; }
 }
 
 /* Short viewports: give the phone the room the header was using. */

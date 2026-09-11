@@ -18,8 +18,6 @@ No folding display required. No folding display supported, in fact.
 
 ![iPhone Solo: a home screen folding away as the phone is tilted](media/demo.gif)
 
-*One tilt, no hinge. [The longer clip](media/demo.mp4) shows it picked up off the desk.*
-
 **[Try it in your browser](https://peteropensource.github.io/iPhone-Solo/)** &nbsp;·&nbsp;
 **[How it works](docs/ALGORITHM.md)** &nbsp;·&nbsp;
 **[Port it yourself](docs/skill/SKILL.md)**
