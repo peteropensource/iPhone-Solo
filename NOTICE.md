@@ -2,9 +2,10 @@
 
 The sample screenshot bundled with the examples and the web demo
 (`Examples/iPhoneSolo/iPhoneSolo/Assets.xcassets/HomeBase.imageset`, `Web/assets/sample.jpg`)
-is a capture of the iOS Simulator home screen. It contains Apple's system wallpaper and app
-icons, which are Apple's property and are not covered by this repository's MIT licence. They are
-included only so the demo has something recognisable to fold.
+is a capture of the iOS Simulator home screen, labelled "SIMULATED HOME PAGE" so nobody mistakes
+it for a live device. It contains Apple's system wallpaper and app icons, which are Apple's
+property and are not covered by this repository's MIT licence. They are included only so the demo
+has something recognisable to fold.
 
 If you are shipping something, swap in your own artwork. The library itself neither knows nor
 cares what picture it is given.
