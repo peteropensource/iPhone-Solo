@@ -39,9 +39,9 @@ No folding display required. No folding display supported, in fact.
 
 ---
 
-Under the joke there is a real, tested library. It ships for SwiftUI, for the web and for
-Jetpack Compose, it has a written specification you can port from, and it does not care what you
-point it at.
+Under the joke there is a real library. It ships for SwiftUI, for the web and for Jetpack
+Compose, each one built and run on the platform it targets, with a written specification you can
+port from. It does not care what picture you point it at.
 
 ## The idea
 
@@ -77,9 +77,27 @@ dependencies: [
 The module is called `TiltFold`, because `import iPhoneSolo` felt like pushing the joke one step
 too far into your source file.
 
-iOS 16+, macOS 13+, tvOS 16+. No dependencies. Built and tested against those three; other Apple
-platforms are not claimed because they have not been checked. The gyroscope path is iOS only, and
-everywhere else you drive the roll yourself.
+No dependencies. What has actually been done on each platform, rather than what the deployment
+targets imply:
+
+| | Compiles | Tests execute here | Effect rendered | `TiltFoldPicture` |
+|---|---|---|---|---|
+| **iOS 16+** | yes | no | yes: Simulator, and the phone in the clip above | yes |
+| **macOS 13+** | yes | yes | no | no |
+| **tvOS 16+** | yes | no | no | yes |
+
+The test suite runs on macOS, because that is where `swift test` executes. It is pure arithmetic
+with no platform dependency, so it covers the geometry for all three, but it has never been run
+on an iOS or tvOS target and it touches none of the drawing.
+
+iOS is the only platform anyone has actually looked at. macOS and tvOS compile in CI on every
+push and have no example app. Treat them as supported in the sense that the compiler agrees, not
+in the sense that anyone has seen the effect on one.
+
+Two API notes follow from that table. `TiltFoldPicture` and `BlurredPicture` need UIKit, so they
+are absent on macOS; the `tiltFold()` modifier and everything under it work everywhere. The
+gyroscope path is iOS only, so on every other platform `TiltMonitor.isAvailable` is false and you
+drive the roll yourself.
 
 ### On any SwiftUI view
 
@@ -99,7 +117,7 @@ scroll, toggles toggle, animations animate. Layout is left alone, so the view ta
 size it would have taken without the modifier.
 
 The content dissolves into **transparency**, not into a colour, so whatever you put behind it is
-what gets revealed. Put `Color.black` behind it to match the video.
+what gets revealed. Put `Color.black` behind it to match the clip above.
 
 ### Driven by something other than gravity
 
@@ -221,7 +239,7 @@ Flutter, React Native, Unity and WebGL are all wide open, and PRs are welcome.
 
 | | |
 |---|---|
-| [`Examples/iPhoneSolo`](Examples/iPhoneSolo) | The app from the video. A home-screen screenshot that folds, with the tuning panel hidden behind a fake home-screen icon. Uses `TiltFoldPicture` and `tiltFoldOverlay`. |
+| [`Examples/iPhoneSolo`](Examples/iPhoneSolo) | The app in the clip above. A home-screen screenshot that folds, with the tuning panel hidden behind a fake home-screen icon. Uses `TiltFoldPicture` and `tiltFoldOverlay`. |
 | [`Examples/LiveContent`](Examples/LiveContent) | `tiltFold()` on ordinary live SwiftUI content: a card with a picker, a toggle, a progress bar and a list, all still interactive while folded. Drag to drive it in the simulator. |
 | [`Android/sample`](Android/sample) | The Compose equivalent. |
 | [`Examples/Snippets.md`](Examples/Snippets.md) | Copy-paste recipes, including tilt as a gesture rather than as ambience. |
@@ -241,9 +259,14 @@ ladder is monotonic and resolution-independent.
 swift test
 ```
 
+That suite executes on macOS, since that is what `swift test` targets. It is pure arithmetic, so
+it says nothing about the drawing on any platform; the drawing was checked by looking at it, on
+the iOS Simulator and on a phone.
+
 The web port's maths was checked against the same reference table. The Android port carries its
 own 22 tests, run with `./gradlew :tiltfold:testDebugUnitTest`, plus `Android/verify-math.sh`,
-which checks the arithmetic with nothing installed but `kotlinc`.
+which checks the arithmetic with nothing installed but `kotlinc`. Both of those were also checked
+by looking: the web demo in a browser, the Android sample on an emulator.
 
 ## What this is and is not
 

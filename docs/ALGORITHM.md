@@ -6,9 +6,13 @@ This document is the portable specification. It describes the effect in terms of
 two response curves, with no reference to Swift, SwiftUI or any other framework, so that it can
 be reimplemented on any platform that can rotate a texture in 3D and mask it with a gradient.
 
-The Swift package in `Sources/TiltFold` and the zero-dependency web port in `Web/` are both
-implementations of exactly what follows. If they ever disagree with this document, this
+Three implementations in this repository follow it: the Swift package in `Sources/TiltFold`, the
+zero-dependency web port in `Web/`, and the Jetpack Compose port in `Android/`. All three
+reproduce the reference values in section 10. If any of them disagrees with this document, this
 document is right and the code is a bug.
+
+Where a platform forces a departure, the port documents it in its own README rather than quietly
+diverging. Android and the web each have some; the Swift package has none.
 
 ## 1. The mental model
 

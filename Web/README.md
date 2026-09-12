@@ -58,6 +58,22 @@ The pure functions (`smoothstep`, `tiltOf`, `progressOf`, `frontOf`, `phaseAt`, 
 `alphaOf`, `levelMaskOf`, `sigmaFractions`) are exported too, so the maths can be checked against
 the reference values in ALGORITHM.md §10 without touching the DOM.
 
+## Where CSS forced a departure from the spec
+
+One, and it is a performance note rather than a behavioural one.
+
+**Blurred levels are rendered at full resolution.** Section 7 suggests rendering them at half
+resolution to make the Gaussian passes cheaper. `filter: blur()` gives no control over the
+resolution it works at, and faking it with a half-size element scaled back up would have
+complicated the mask coordinate conversion for no visible gain at the sizes this demo uses.
+
+Two things the spec spends words on come free here. Section 8's "do not clamp the blur" is simply
+how `filter: blur()` behaves: it reads transparent outside the element and paints past the border
+box. And section 4's five matrix steps collapse into `perspective` plus `perspective-origin` on
+the parent and `transform-origin` plus `rotateY` on the child, which is why the spec quotes the
+CSS form directly. Section 8's expanded box is still built by hand and is load-bearing: a CSS
+mask only paints inside the border box, so without it the feather is clipped back into a hard line.
+
 ## Deploy to GitHub Pages
 
 1. Push the repository to GitHub.
