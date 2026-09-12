@@ -2,7 +2,7 @@
 
 # iPhone Solo
 
-### Want that silky foldable page turn, but don't have the budget for a second screen?
+### Saw that silky page turn on the iPhone Duo, but don't have the budget for a second screen?
 
 Allow me to introduce **iPhone Solo**.
 
