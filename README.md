@@ -77,27 +77,19 @@ dependencies: [
 The module is called `TiltFold`, because `import iPhoneSolo` felt like pushing the joke one step
 too far into your source file.
 
-No dependencies. What has actually been done on each platform, rather than what the deployment
-targets imply:
+iOS 16 and up, and nothing else. No dependencies.
 
-| | Compiles | Tests execute here | Effect rendered | `TiltFoldPicture` |
-|---|---|---|---|---|
-| **iOS 16+** | yes | no | yes: Simulator, and the phone in the clip above | yes |
-| **macOS 13+** | yes | yes | no | no |
-| **tvOS 16+** | yes | no | no | yes |
+The package used to declare macOS and tvOS as well, on the strength of the compiler accepting
+them. It was dropped because nobody had ever run the effect on either, there was no example app
+for either, and `TiltFoldPicture` does not even exist on macOS, since it needs UIKit. Claiming a
+platform you have not looked at is worse than not claiming it.
 
-The test suite runs on macOS, because that is where `swift test` executes. It is pure arithmetic
-with no platform dependency, so it covers the geometry for all three, but it has never been run
-on an iOS or tvOS target and it touches none of the drawing.
+Nothing in the library stops you adding them back in your own fork; the geometry and the curves
+have no platform dependency at all, and the `tiltFold()` modifier is plain SwiftUI. You would be
+the first to see it run there.
 
-iOS is the only platform anyone has actually looked at. macOS and tvOS compile in CI on every
-push and have no example app. Treat them as supported in the sense that the compiler agrees, not
-in the sense that anyone has seen the effect on one.
-
-Two API notes follow from that table. `TiltFoldPicture` and `BlurredPicture` need UIKit, so they
-are absent on macOS; the `tiltFold()` modifier and everything under it work everywhere. The
-gyroscope path is iOS only, so on every other platform `TiltMonitor.isAvailable` is false and you
-drive the roll yourself.
+The gyroscope path is iOS only in any case. Everywhere else `TiltMonitor.isAvailable` is false
+and you drive the roll yourself, which is the same API you would use for a drag or a transition.
 
 ### On any SwiftUI view
 
@@ -256,12 +248,14 @@ projection, perspective is centred rather than hinged, pitch never leaks into ro
 ladder is monotonic and resolution-independent.
 
 ```bash
-swift test
+xcodebuild test -scheme TiltFold -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
-That suite executes on macOS, since that is what `swift test` targets. It is pure arithmetic, so
-it says nothing about the drawing on any platform; the drawing was checked by looking at it, on
-the iOS Simulator and on a phone.
+Note that this is not `swift test`. That would run the suite on the Mac, which is not a platform
+this package supports; the destination above runs it where the package actually ships.
+
+The suite is pure arithmetic, so it says nothing about the drawing. The drawing was checked by
+looking at it, on the Simulator and on a phone.
 
 The web port's maths was checked against the same reference table. The Android port carries its
 own 22 tests, run with `./gradlew :tiltfold:testDebugUnitTest`, plus `Android/verify-math.sh`,

@@ -5,8 +5,6 @@ let package = Package(
     name: "TiltFold",
     platforms: [
         .iOS(.v16),
-        .macOS(.v13),
-        .tvOS(.v16),
     ],
     products: [
         .library(name: "TiltFold", targets: ["TiltFold"]),

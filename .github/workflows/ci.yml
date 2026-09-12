@@ -12,23 +12,24 @@ permissions:
 
 jobs:
   test:
-    name: Test on macOS
+    name: Test on iOS Simulator
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      # Run the suite on the platform the package actually targets, rather than on the host.
       - name: Run the specification conformance tests
-        run: swift test
+        run: |
+          xcodebuild test \
+            -scheme TiltFold \
+            -destination 'platform=iOS Simulator,name=iPhone 16'
 
   build:
-    name: Build for ${{ matrix.platform }}
+    name: Build for iOS devices
     runs-on: macos-15
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [iOS, tvOS]
     steps:
       - uses: actions/checkout@v4
-      - run: xcodebuild -scheme TiltFold -destination 'generic/platform=${{ matrix.platform }}' build
+      # The simulator build above is x86/arm64 host code; this is the real device slice.
+      - run: xcodebuild -scheme TiltFold -destination 'generic/platform=iOS' build
 
   examples:
     name: Build ${{ matrix.example }}
